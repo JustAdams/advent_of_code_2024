@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use anyhow::*;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -74,17 +75,32 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
-    //
-    // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //     Ok(0)
-    // }
-    //
-    // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-    //
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    println!("\n=== Part 2 ===");
+
+    fn part2<R: BufRead>(reader: R) -> Result<i32> {
+        let extracted_input = extract_input_vecs(reader);
+        let mut left_vec = extracted_input.left_vec;
+        let mut right_vec = extracted_input.right_vec;
+
+        // build count of occurrences in right list
+        let mut count_map = HashMap::new();
+        for right_num in right_vec.iter() {
+            let count = count_map.entry(right_num).or_insert(0);
+            *count += 1;
+        }
+
+        let mut mult_distance = 0;
+        for left_num in left_vec.iter() {
+            mult_distance += left_num * count_map.get(left_num).unwrap_or(&0);
+        }
+        Ok(mult_distance)
+    }
+
+    assert_eq!(31, part2(BufReader::new(TEST.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     Ok(())

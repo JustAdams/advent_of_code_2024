@@ -28,25 +28,9 @@ fn main() -> Result<()> {
         let mut safe_count = 0;
 
         for line in reader.lines() {
-            let mut is_safe = true;
-
             let line = line?;
             let line_vec = line.split_whitespace().collect::<Vec<&str>>();
-
-            let mut prev_num = line_vec[0].parse::<i32>()?;
-            let is_increasing = prev_num < line_vec[1].parse::<i32>()?;
-
-            for i in 1..line_vec.len() {
-                let curr_num = line_vec[i].parse::<i32>()?;
-                if (is_increasing && prev_num >= curr_num) || (!is_increasing && prev_num <= curr_num) {
-                    is_safe = false;
-                    break;
-                } else if (prev_num - curr_num).abs() > 3 {
-                    is_safe = false;
-                    break;
-                }
-                prev_num = curr_num;
-            }
+            let is_safe = is_safe_level(line_vec);
 
             if is_safe {
                  safe_count += 1;
@@ -54,6 +38,7 @@ fn main() -> Result<()> {
         }
         Ok(safe_count)
     }
+
 
     assert_eq!(2, part1(BufReader::new(TEST.as_bytes()))?);
 
@@ -63,18 +48,60 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
-    //
-    // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //     Ok(0)
-    // }
-    //
-    // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-    //
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    println!("\n=== Part 2 ===");
+
+    fn part2<R: BufRead>(reader: R) -> Result<usize> {
+        let mut safe_count = 0;
+
+        for line in reader.lines() {
+            let line = line?;
+            let line_vec = line.split_whitespace().collect::<Vec<&str>>();
+            let is_safe = is_safe_level(line_vec);
+            if is_safe {
+                safe_count += 1;
+            } else {
+                let full_line = line.split_whitespace().collect::<Vec<&str>>();
+                for i in 0..full_line.len() {
+                    // pop the ith element and perform operation on remaining line
+                    let mut cloned_line = full_line.clone();
+                    cloned_line.remove(i);
+                    if is_safe_level(cloned_line) {
+                        safe_count += 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        Ok(safe_count)
+    }
+
+    assert_eq!(4, part2(BufReader::new(TEST.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     Ok(())
+}
+
+fn is_safe_level(line_vec: Vec<&str>) -> bool {
+    let mut is_safe = true;
+
+    let mut prev_num = line_vec[0].parse::<i32>().unwrap_or(-1);
+    let is_increasing = prev_num < line_vec[1].parse::<i32>().unwrap_or(-1);
+
+    for i in 1..line_vec.len() {
+        let curr_num = line_vec[i].parse::<i32>().unwrap_or(-1);
+        if (is_increasing && prev_num >= curr_num) || (!is_increasing && prev_num <= curr_num) {
+            is_safe = false;
+            break;
+        } else if (prev_num - curr_num).abs() > 3 {
+            is_safe = false;
+            break;
+        }
+        prev_num = curr_num;
+    }
+    is_safe
 }
